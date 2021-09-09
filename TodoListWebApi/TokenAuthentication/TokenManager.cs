@@ -1,9 +1,13 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 
@@ -11,13 +15,15 @@ namespace ToDoListApi.TokenAuthentication
 {
     public class TokenManager : ITokenManager
     {
-        private List<Token> listTokens;
+        private JwtSecurityTokenHandler tokenHandler;
+        private byte[] SecretKey;
         private readonly IConfiguration _configuration;
         SqlConnection ToDoListDB;
         public TokenManager(IConfiguration configuration)
         {
+            tokenHandler = new JwtSecurityTokenHandler();
+            SecretKey = Encoding.ASCII.GetBytes("abcdefghabcdefghabcdefghabcdefgh");//32byte
             _configuration = configuration;
-            listTokens = new List<Token>();
             ToDoListDB = new SqlConnection(_configuration.GetConnectionString("ToDoListDBConnection"));
         }
         public bool Authenticate(string Username, string Password)
@@ -58,27 +64,30 @@ namespace ToDoListApi.TokenAuthentication
             return false;
         }
         
-        public Token NewToken(string User)
+        public string NewToken(string User)
         {
-            //生成新TOKEN
-            var token = new Token
-            { //GUID 輸出 36字元 資料庫裡的類型為nchar(36)
-                TokenValue = Guid.NewGuid().ToString(),
-                RefreshTokenValue = Guid.NewGuid().ToString(),
-                ExpiryDate = DateTime.Now.AddMinutes(10)
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.Name,"TOKENTESTING")}),
+                Expires =DateTime.UtcNow.AddMinutes(1),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(SecretKey),
+                    SecurityAlgorithms.HmacSha256Signature)
             };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var jwtString = tokenHandler.WriteToken(token);
+            //生成新TOKEN
             //add new token in list
-            listTokens.Add(token);
             //測試用 只存LIST 不存資料庫
             if(User.ToLower() == "admin")
-            {
-                return token;
-            }
+            { 
+                return jwtString;
+            }/*
             //add Token Value in datebase
             string update = @"UPDATE UserInfo SET TokenValue=@TokenValue,RefreshTokenValue=@RefreshTokenValue";
             SqlCommand SearchCommand = new SqlCommand(update , ToDoListDB);
-            SearchCommand.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = token.TokenValue;
-            SearchCommand.Parameters.Add("@RefreshTokenValue", SqlDbType.VarChar).Value = token.RefreshTokenValue;
+            SearchCommand.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = jwtString.GetHashCode();
+            //SearchCommand.Parameters.Add("@RefreshTokenValue", SqlDbType.VarChar).Value = token.RefreshTokenValue;
             try
             {
                 ToDoListDB.Open();
@@ -87,21 +96,34 @@ namespace ToDoListApi.TokenAuthentication
             }
             //輸出SQL有關的錯誤訊息 &其他錯誤訊息
             catch (SqlException ex) { System.Diagnostics.Debug.WriteLine(ex); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }*/
 
-            return token;
+            return jwtString;
         }
 
-        public bool VerifyToken(string token)
+        public ClaimsPrincipal VerifyToken(string token)
         {
+            var claims = tokenHandler.ValidateToken(token,
+                new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(SecretKey),
+                    ValidateLifetime = true,
+                    ValidateAudience = false,
+                    ValidateIssuer = false,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+            return claims;
+                /*
             if (listTokens.Any(x => x.TokenValue == token && x.ExpiryDate > DateTime.Now))
                 return true;
             else
-                return false;
+                return false;*/
         }
         public bool RefreshTokenCheck(string User,string Refreshtoken)
         {
-            
+            return false;
+            /*
             if (listTokens.Any(x => x.RefreshTokenValue == Refreshtoken && x.ExpiryDate > DateTime.Now))
             {
                 ///刪除的部分之後要改寫成非同步
@@ -112,7 +134,7 @@ namespace ToDoListApi.TokenAuthentication
             {   
                 listTokens.RemoveAll(x => x.ExpiryDate < DateTime.Now);
                 return false;
-            }
+            }*/
         }
     }
 }

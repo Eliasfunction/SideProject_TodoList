@@ -25,15 +25,18 @@ namespace ToDoListApi.Filters
             {   //抓Headers值Authorization 為token
                 token = context.HttpContext.Request.Headers.First(x => x.Key == "Authorization").Value;
                 //
-                if (!tokenManager.VerifyToken(token))
-                    result = false;
-            }
-            if (!result)
-            {
-                context.ModelState.AddModelError("Unauthorized", "Check Your Authorization Value , Or Get New Authorization");
-                context.Result = new UnauthorizedObjectResult(context.ModelState);
+                try
+                {
+                    var ClaimPrinciple = tokenManager.VerifyToken(token);
+                }
+                catch(Exception ex)
+                {
+                    result =false;
+                    context.ModelState.AddModelError("Unauthorized", ex.ToString());
+                }
             }
 
+            if (!result) context.Result = new UnauthorizedObjectResult(context.ModelState);
         }
     }
 }
