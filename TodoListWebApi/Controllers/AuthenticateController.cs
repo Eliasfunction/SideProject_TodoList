@@ -24,12 +24,12 @@ namespace ToDoListApi.Controllers
             if(tokenManager.Authenticate( User, Pwd))
                 return Ok(new { Token = tokenManager.NewToken(User) });
             else
-            {
+            { 
                 ModelState.AddModelError("Unauthorized", "You Are Not Unauthorized.");
                 return Unauthorized(ModelState);
             }
         }
-        
+        /*
         [HttpPost]
         [Route("/api/[Controller]/Refresh")]
         [TokenAuthenticationFilter]
@@ -39,10 +39,10 @@ namespace ToDoListApi.Controllers
                 return Ok(new { Token = tokenManager.NewToken(User) });
             else
             {
-                ModelState.AddModelError("Parameter Errors", "Please Check Your Parameter.");
+                ModelState.AddModelError("Errors", "Service is offline");
                 return Unauthorized(ModelState);
             }
             
-        }
+        }*/
     }
 }

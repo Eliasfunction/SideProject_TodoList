@@ -4,12 +4,15 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ToDoListApi.TokenAuthentication;
 using Core.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
 
 namespace TodoListWebApi
 {
@@ -25,9 +28,27 @@ namespace TodoListWebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<ITokenManager, TokenManager>();
+            services.AddTransient<ITokenManager, TokenManager>();
             services.AddSingleton<IToDoDBmanager, ToDoDBmanager>();
+            /*
+            services.AddAuthentication(o =>
+            {
+                o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(o =>
+            {
+                o.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes("abcdefghabcdefghabcdefghabcdefgh")),
+                    ValidateLifetime = true,
+                    ValidateAudience = false,
+                    ValidateIssuer = false,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });*/
             services.AddRazorPages();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,7 +69,7 @@ namespace TodoListWebApi
             app.UseStaticFiles();
 
             app.UseRouting();
-
+           // app.UseAuthentication();//
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
