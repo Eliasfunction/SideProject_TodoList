@@ -11,7 +11,6 @@ namespace ToDoListApi.TokenAuthentication
         public string TokenValue { get; set; }
         //刷新令牌值
         public string RefreshTokenValue { get; set; }
-
         //到期時間
         public DateTime ExpiryDate { get; set; }
 

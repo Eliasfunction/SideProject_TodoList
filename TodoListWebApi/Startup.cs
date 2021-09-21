@@ -30,23 +30,6 @@ namespace TodoListWebApi
         {
             services.AddTransient<ITokenManager, TokenManager>();
             services.AddSingleton<IToDoDBmanager, ToDoDBmanager>();
-            /*
-            services.AddAuthentication(o =>
-            {
-                o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(o =>
-            {
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes("abcdefghabcdefghabcdefghabcdefgh")),
-                    ValidateLifetime = true,
-                    ValidateAudience = false,
-                    ValidateIssuer = false,
-                    ClockSkew = TimeSpan.Zero
-                };
-            });*/
             services.AddRazorPages();
 
         }
@@ -69,7 +52,6 @@ namespace TodoListWebApi
             app.UseStaticFiles();
 
             app.UseRouting();
-           // app.UseAuthentication();//
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

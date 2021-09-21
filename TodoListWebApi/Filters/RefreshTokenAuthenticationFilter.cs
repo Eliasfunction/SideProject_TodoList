@@ -8,7 +8,7 @@ using ToDoListApi.TokenAuthentication;
 
 namespace ToDoListApi.Filters
 {
-    public class TokenAuthenticationFilter : Attribute , IAuthorizationFilter
+    public class RefreshTokenAuthenticationFilter : Attribute , IAuthorizationFilter
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
@@ -16,12 +16,12 @@ namespace ToDoListApi.Filters
 
             var result = true;
             //沒有Headers值Authorization =>false
-            if (!context.HttpContext.Request.Headers.ContainsKey("Authorization"))
+            if (!context.HttpContext.Request.Headers.ContainsKey("Refreshtoken"))
                 result = false;
             string token = string.Empty;
             if (result)
             {   //抓Headers值Authorization 為token
-                token = context.HttpContext.Request.Headers.First(x => x.Key == "Authorization").Value;
+                token = context.HttpContext.Request.Headers["Refreshtoken"].FirstOrDefault();
                 //
                 try
                 {

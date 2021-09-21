@@ -10,34 +10,38 @@ namespace Core.Models
     public class ToDoDBmanager : IToDoDBmanager
     {
         private readonly IConfiguration _configuration;
-        SqlConnection ToDoListDB;
+        private SqlConnection ToDoListDB;
         public ToDoDBmanager(IConfiguration configuration)
         {
             _configuration = configuration;
             ToDoListDB = new SqlConnection(configuration.GetConnectionString("ToDoListDBConnection"));
         }
 
-        public List<Thing> GetThing(string UserName)
+        public List<Thing> GetThing(string Token)
         {
             List<Thing> things = new List<Thing>();
-
-            string select = @"SELECT * FROM ToDo WHERE UserId=(SELECT UserId FROM UserInfo WHERE UserName=@UserName)";
-            SqlCommand SearchCommand = new SqlCommand(select, ToDoListDB);
-            SearchCommand.Parameters.Add("@UserName", SqlDbType.VarChar).Value = UserName;
+            
+            string select = @"SELECT * FROM ToDo 
+                                WHERE UserId=(SELECT UserID FROM Token WHERE TokenValue =@TokenValue) 
+                                AND Recycle=@Recycle";
+            SqlCommand Search = new SqlCommand(select, ToDoListDB);
+            Search.Parameters.Add("@Recycle", SqlDbType.Bit).Value = false;
+            Search.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = Token;
             try
             {
                 ToDoListDB.Open();
-                SqlDataReader SqlData = SearchCommand.ExecuteReader();
+                SqlDataReader SqlData = Search.ExecuteReader();
                 if (SqlData.HasRows)
                 {
                     while (SqlData.Read())
                     {
                         Thing thing = new Thing
                         {
+                            TodoId= SqlData.GetInt32(SqlData.GetOrdinal("ToDoId")),
                             Title = SqlData.GetString(SqlData.GetOrdinal("Title")),
                             Description = SqlData.GetString(SqlData.GetOrdinal("Description")),
-                            Finish = SqlData.GetInt32(SqlData.GetOrdinal("Finish")),
-                            AddDate = SqlData.GetDateTime(SqlData.GetOrdinal("AddDate"))
+                            AddDate = SqlData.GetDateTime(SqlData.GetOrdinal("AddDate")),
+                            Finish = SqlData.GetBoolean(SqlData.GetOrdinal("Finish"))
                         };
                         things.Add(thing);
                     }
@@ -50,71 +54,69 @@ namespace Core.Models
 
             return things;
         }
-        public bool NewThing(Thing thing,string UserName)
+        public bool NewThing(Thing thing,string Token)
         {
-            string insertinto = @"INSERT INTO ToDo (UserId, Title , Description , AddDate , Finish , Recycle)
-                        VALUES ((SELECT UserId FROM UserInfo WHERE UserName=@UserName) , @Title , @Description , @AddDate , @Finish , @Recycle )";
+            string insertinto = @"INSERT INTO ToDo ( Title , Description , UserId)
+                        VALUES (@Title , @Description, (SELECT UserID FROM Token WHERE TokenValue =@TokenValue))";
             SqlCommand insert = new SqlCommand(insertinto, ToDoListDB);
-            insert.Parameters.Add("@UserName", SqlDbType.VarChar).Value = UserName;
             insert.Parameters.Add("@Title", SqlDbType.NVarChar).Value = thing.Title;
             insert.Parameters.Add("@Description", SqlDbType.NVarChar).Value = thing.Description;
-            insert.Parameters.Add("@AddDate", SqlDbType.Date).Value = DateTime.Today; 
-            insert.Parameters.Add("@Finish", SqlDbType.Int).Value = 0;
-            insert.Parameters.Add("@Recycle", SqlDbType.Int).Value = 0;
-
+            insert.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = Token;
             try
             {
                 ToDoListDB.Open();
-                insert.ExecuteNonQuery();
+                int RowsAffected = insert.ExecuteNonQuery();
                 ToDoListDB.Close();
-                return true;
+                if (RowsAffected != 0)
+                    return true;
             }
             catch (SqlException ex) { System.Diagnostics.Debug.WriteLine(ex); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
 
             return false;
         }
-        public bool ChangeThingByTitle(Thing thing, string UserName)
+        public bool ChangeThing(Thing thing, string Token)
         {
-            string UPDATE = @"UPDATE ToDo SET 
-                                Description = @Description,AddDate = @AddDate,Finish = @Finish, Recycle = @Recycle Where
-                                ListId = (Select ListId From ToDo where
-                                UserId = (SELECT UserId FROM UserInfo WHERE UserName = @UserName) AND Title = @Title)";
-            //ListId 條件=> 用UserName找UserId then 在 ToDo找匹配Title跟UserId的ListId
+            string UPDATE = @"UPDATE TOP (1) ToDo SET Title=@Title , Description=@Description , Finish=@Finish
+                                Where ToDoId=@ToDoId
+                                AND UserId = (SELECT UserID FROM Token WHERE TokenValue =@TokenValue)";
             SqlCommand update = new SqlCommand(UPDATE, ToDoListDB);
-            update.Parameters.Add("@UserName", SqlDbType.VarChar).Value = UserName;
             update.Parameters.Add("@Title", SqlDbType.NVarChar).Value = thing.Title;
             update.Parameters.Add("@Description", SqlDbType.NVarChar).Value = thing.Description;
-            update.Parameters.Add("@AddDate", SqlDbType.Date).Value = DateTime.Today;
-            update.Parameters.Add("@Finish", SqlDbType.Int).Value = 0;
-            update.Parameters.Add("@Recycle", SqlDbType.Int).Value = 0;
+            update.Parameters.Add("@Finish", SqlDbType.Bit).Value = thing.Finish;
+            update.Parameters.Add("@ToDoId", SqlDbType.Int).Value = thing.TodoId;
+            update.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = Token;
 
             try
             {
                 ToDoListDB.Open();
-                update.ExecuteNonQuery();
+                int RowsAffected = update.ExecuteNonQuery();
                 ToDoListDB.Close();
-                return true;
+                if (RowsAffected != 0)
+                    return true;
+
             }
             catch (SqlException ex) { System.Diagnostics.Debug.WriteLine(ex); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
 
             return false;
         }
-        public bool RecycleByTitle(RecycleThing title, string UserName)
+        public bool Recycle(RecycleThing todoId, string Token)
         {
-            string DELETE = @"DELETE FROM Todo Where
-                                ListId = (Select ListId From ToDo where
-                                UserId = (SELECT UserId FROM UserInfo WHERE UserName = @UserName) AND Title = @Title)";
-            SqlCommand delete = new SqlCommand(DELETE, ToDoListDB);
-            delete.Parameters.Add("@UserName", SqlDbType.VarChar).Value = UserName;
-            delete.Parameters.Add("@Title", SqlDbType.NVarChar).Value =title.Title;
+            string Recycle = @"UPDATE TOP (1) Todo SET Recycle=@Recycle
+                                Where ToDoId=@ToDoId
+                                AND UserId = (SELECT UserID FROM Token WHERE TokenValue =@TokenValue)";
+            SqlCommand recycle = new SqlCommand(Recycle, ToDoListDB);
+            recycle.Parameters.Add("@Recycle", SqlDbType.Bit).Value = true;
+            recycle.Parameters.Add("@ToDoId", SqlDbType.Int).Value = todoId.TodoId;
+            recycle.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = Token;
             try
             {
                 ToDoListDB.Open();
-                delete.ExecuteNonQuery();
+                int RowsAffected = recycle.ExecuteNonQuery();
                 ToDoListDB.Close();
-                return true;
+                if (RowsAffected != 0)
+                    return true;
             }
             catch (SqlException ex) { System.Diagnostics.Debug.WriteLine(ex); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }

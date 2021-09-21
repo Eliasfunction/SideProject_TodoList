@@ -9,9 +9,9 @@ using ToDoListApi.Filters;
 
 namespace ToDoListApi.Controllers
 {
-    [TokenAuthenticationFilter]
+    //[TokenAuthenticationFilter]
     [ApiController]
-    [Route("/api/[Controller]/{UserName}")]
+    [Route("/api/[Controller]")]
     //[Authorize]
     public class TodoController : ControllerBase
     {
@@ -21,35 +21,34 @@ namespace ToDoListApi.Controllers
             this.toDoDBmanager = toDoDBmanager;
         }
         [HttpGet]
-        public IActionResult GetTning(string UserName)
+        public IActionResult GetTning()
         {
-            return Ok("succ");
-            /*
-            List<Thing> things = toDoDBmanager.GetThing(UserName);
-            return Ok(new { things });*/
+            List<Thing> things = toDoDBmanager.GetThing(Request.Headers["Authorization"]);
+            return Ok(new { things });
+            //return Ok(toDoDBmanager.GetThing(Token));
         }
         [HttpPost]
-        public IActionResult CreateTning([FromBody] Thing thing,string UserName)
+        public IActionResult CreateTning([FromBody] Thing thing)
         {
-            if(toDoDBmanager.NewThing(thing, UserName))
+            if (toDoDBmanager.NewThing(thing, Request.Headers["Authorization"]))
             {
                 return Ok("Create Success");
             }
             return Ok("Create failed");
         }
         [HttpPut]
-        public IActionResult UpdateThing([FromBody] Thing thing, string UserName)
+        public IActionResult UpdateThing([FromBody] Thing thing)
         {
-            if(toDoDBmanager.ChangeThingByTitle(thing, UserName))
+            if (toDoDBmanager.ChangeThing(thing, Request.Headers["Authorization"]))
             {
                 return Ok("Update Success");
             }
             return Ok("Update failed");
         }
         [HttpDelete]
-        public IActionResult Delete([FromBody] RecycleThing title, string UserName)
+        public IActionResult Delete([FromBody] RecycleThing todoId)
         {
-            if (toDoDBmanager.RecycleByTitle(title, UserName))
+            if (toDoDBmanager.Recycle(todoId, Request.Headers["Authorization"]))
             {
                 return Ok("Delete Success");
             }

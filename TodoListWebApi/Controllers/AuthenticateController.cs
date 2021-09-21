@@ -19,30 +19,52 @@ namespace ToDoListApi.Controllers
         }
 
         [HttpGet]
-        public IActionResult Authenticate(string User,string Pwd)
-        {
-            if(tokenManager.Authenticate( User, Pwd))
-                return Ok(new { Token = tokenManager.NewToken(User) });
+        public IActionResult Authenticate() //string User, string Pwd
+        {   //check userinfo & return USERID
+
+            string User = Request.Headers["Username"];
+            string Pwd = Request.Headers["Password"];
+
+            if (string.IsNullOrWhiteSpace(User) || string.IsNullOrWhiteSpace(Pwd))
+            {
+                ModelState.AddModelError("Parameters ERROR", "Required Parameters are not met.");
+                return Unauthorized(ModelState);
+            }
+            //檢查登入 返回UserID
+            (bool AuthPass, int UserID) = tokenManager.Authenticate(User, Pwd);
+            if (AuthPass)
+            {
+                //返回TOKEN值 & 資料庫寫入狀態
+                (List<Token> tokens, bool StoredSUCC) = tokenManager.GetToken(UserID);
+                //資料庫寫入成功
+                if (StoredSUCC)
+                    return Ok(new { tokens });
+                //資料庫寫入失敗
+                ModelState.AddModelError("Server Error", "TOKEN can be distributed but cannot be verified");
+                return Unauthorized(ModelState);
+            }
             else
-            { 
+            {
                 ModelState.AddModelError("Unauthorized", "You Are Not Unauthorized.");
                 return Unauthorized(ModelState);
             }
         }
-        /*
+
         [HttpPost]
+        [RefreshTokenAuthenticationFilter]
         [Route("/api/[Controller]/Refresh")]
-        [TokenAuthenticationFilter]
-        public IActionResult Refresh(string User,string Refresh)
+        public IActionResult Refresh()
         {
-            if (tokenManager.RefreshTokenCheck(User,Refresh))
-                return Ok(new { Token = tokenManager.NewToken(User) });
-            else
-            {
-                ModelState.AddModelError("Errors", "Service is offline");
-                return Unauthorized(ModelState);
-            }
-            
-        }*/
+            string Refresh = Request.Headers["RefreshToken"];
+
+            //用Refresh獲取新TOKEN
+            (List<Token> tokens, bool StoredSUCC) = tokenManager.RefreshToken(Refresh);
+            //資料庫寫入成功
+            if (StoredSUCC)
+                return Ok(new { tokens });
+            //資料庫寫入失敗
+            ModelState.AddModelError("Error", "TOKEN can be distributed but cannot be verified,Please log in again");
+            return Unauthorized(ModelState);
+        }
     }
 }
