@@ -17,3 +17,6 @@ Delete (need Body=> Title)              , =>Delete Success OR Delete failed
 
 warning <Any Title cannot be repeated in ToDoList & Must be add Token Headers ,any Request.>
         
+![image](https://github.com/Eliasfunction/SideProjectSelf_TodoListWebApiAndJWT/blob/master/ReadmeIMG/ER_MAP.png)
+
+![image](https://github.com/Eliasfunction/SideProjectSelf_TodoListWebApiAndJWT/blob/master/ReadmeIMG/Database%20Tools.png)
