@@ -2,7 +2,7 @@
 Authenticate Token &amp;ToDoList CRUD
 DB is name TodoListWebApiDB-Backup in root directory.
 
-A   Authenticate 
+##A   Authenticate 
 Get Token (Get Token & RefreshToken)
         url=> api/Authenticate
         Headers =>  "Username" & "Password"
@@ -13,7 +13,7 @@ RefreshToken (Get New Token & RefreshToken)
         
 Now must be add Token Headers ,any request.
 
-B   Used Todolist    
+##B   Used Todolist    
         url => api/Todo (need Headers => "Authorization")
                 Get    ()
                         ==> GetTodolist    
@@ -23,7 +23,7 @@ B   Used Todolist
                         ==>Update Success OR Update failed    
                 Delete (need Body=> todoId)
                         ==>Delete Success OR Delete failed
-C Database Design
+##C Database Design
         ER_MAP IS
 ![image](https://github.com/Eliasfunction/SideProjectSelf_TodoListWebApiAndJWT/blob/master/ReadmeIMG/ER_MAP.png)
         Database_Tools IS
