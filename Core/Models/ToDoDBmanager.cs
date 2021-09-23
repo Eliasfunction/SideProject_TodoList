@@ -16,16 +16,15 @@ namespace Core.Models
             _configuration = configuration;
             ToDoListDB = new SqlConnection(configuration.GetConnectionString("ToDoListDBConnection"));
         }
-
-        public List<Thing> GetThing(string Token)
+        public List<Thing> GetThing(string Token, bool Visibility)
         {
             List<Thing> things = new List<Thing>();
-            
+
             string select = @"SELECT * FROM ToDo 
                                 WHERE UserId=(SELECT UserID FROM Token WHERE TokenValue =@TokenValue) 
                                 AND Recycle=@Recycle";
             SqlCommand Search = new SqlCommand(select, ToDoListDB);
-            Search.Parameters.Add("@Recycle", SqlDbType.Bit).Value = false;
+            Search.Parameters.Add("@Recycle", SqlDbType.Bit).Value = Visibility;
             Search.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = Token;
             try
             {
@@ -37,7 +36,7 @@ namespace Core.Models
                     {
                         Thing thing = new Thing
                         {
-                            TodoId= SqlData.GetInt32(SqlData.GetOrdinal("ToDoId")),
+                            TodoId = SqlData.GetInt32(SqlData.GetOrdinal("ToDoId")),
                             Title = SqlData.GetString(SqlData.GetOrdinal("Title")),
                             Description = SqlData.GetString(SqlData.GetOrdinal("Description")),
                             AddDate = SqlData.GetDateTime(SqlData.GetOrdinal("AddDate")),
@@ -54,7 +53,7 @@ namespace Core.Models
 
             return things;
         }
-        public bool NewThing(Thing thing,string Token)
+        public bool NewThing(Thing thing, string Token)
         {
             string insertinto = @"INSERT INTO ToDo ( Title , Description , UserId)
                         VALUES (@Title , @Description, (SELECT UserID FROM Token WHERE TokenValue =@TokenValue))";
@@ -101,19 +100,41 @@ namespace Core.Models
 
             return false;
         }
-        public bool Recycle(RecycleThing todoId, string Token)
+        public bool Recycle(RecycleThing todoId, string Token, bool Visibility)
         {
             string Recycle = @"UPDATE TOP (1) Todo SET Recycle=@Recycle
                                 Where ToDoId=@ToDoId
                                 AND UserId = (SELECT UserID FROM Token WHERE TokenValue =@TokenValue)";
+
             SqlCommand recycle = new SqlCommand(Recycle, ToDoListDB);
-            recycle.Parameters.Add("@Recycle", SqlDbType.Bit).Value = true;
+            recycle.Parameters.Add("@Recycle", SqlDbType.Bit).Value = Visibility;
             recycle.Parameters.Add("@ToDoId", SqlDbType.Int).Value = todoId.TodoId;
             recycle.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = Token;
             try
             {
                 ToDoListDB.Open();
                 int RowsAffected = recycle.ExecuteNonQuery();
+                ToDoListDB.Close();
+                if (RowsAffected != 0)
+                    return true;
+            }
+            catch (SqlException ex) { System.Diagnostics.Debug.WriteLine(ex); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+
+            return false;
+        }
+        public bool Delete(RecycleThing todoId, string Token)
+        {
+            string Delete = @"DELETE TOP (1) ToDo 
+                                WHERE ToDoId=@ToDoId
+                                AND UserId = (SELECT UserID FROM Token WHERE TokenValue =@TokenValue)";
+            SqlCommand delete = new SqlCommand(Delete, ToDoListDB);
+            delete.Parameters.Add("@ToDoId", SqlDbType.Int).Value = todoId.TodoId;
+            delete.Parameters.Add("@TokenValue", SqlDbType.VarChar).Value = Token;
+            try
+            {
+                ToDoListDB.Open();
+                int RowsAffected = delete.ExecuteNonQuery();
                 ToDoListDB.Close();
                 if (RowsAffected != 0)
                     return true;

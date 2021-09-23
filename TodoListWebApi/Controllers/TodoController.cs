@@ -9,7 +9,7 @@ using ToDoListApi.Filters;
 
 namespace ToDoListApi.Controllers
 {
-    //[TokenAuthenticationFilter]
+    [TokenAuthenticationFilter]
     [ApiController]
     [Route("/api/[Controller]")]
     //[Authorize]
@@ -23,7 +23,8 @@ namespace ToDoListApi.Controllers
         [HttpGet]
         public IActionResult GetTning()
         {
-            List<Thing> things = toDoDBmanager.GetThing(Request.Headers["Authorization"]);
+            bool Invisible = false;
+            List<Thing> things = toDoDBmanager.GetThing(Request.Headers["Authorization"], Invisible);
             return Ok(new { things });
             //return Ok(toDoDBmanager.GetThing(Token));
         }
@@ -48,7 +49,8 @@ namespace ToDoListApi.Controllers
         [HttpDelete]
         public IActionResult Delete([FromBody] RecycleThing todoId)
         {
-            if (toDoDBmanager.Recycle(todoId, Request.Headers["Authorization"]))
+            bool Invisible = true;
+            if (toDoDBmanager.Recycle(todoId, Request.Headers["Authorization"], Invisible))
             {
                 return Ok("Delete Success");
             }

@@ -7,11 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TodoListWebApi", "TodoListW
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Core\Core.csproj", "{5E4DABFC-DFB4-4D95-A1DB-CAB65863438C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ReadmeIMG", "ReadmeIMG", "{C9E961C1-D357-4656-8D4D-B2D0C967B879}"
-	ProjectSection(SolutionItems) = preProject
-		..\ER_MAP.png = ..\ER_MAP.png
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
