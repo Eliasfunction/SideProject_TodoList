@@ -6,10 +6,12 @@ DB is name TodoListWebApiDB-Backup in root directory.<br>
 A   Authenticate 
 ------
         Get Token (Get Token & RefreshToken)
+                Get
                 url=> api/Authenticate
                 Headers =>  "Username" & "Password"
 
-        RefreshToken (Get New Token & RefreshToken)
+        RefreshToken (Get New Token & RefreshToken) 
+                Post
                 url=> api/Authenticate/Refresh 
                 Headers =>  "Refreshtoken"
         
