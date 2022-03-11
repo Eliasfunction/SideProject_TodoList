@@ -31,7 +31,7 @@ B   Used Todolist
 C Database Design
 ------
 ### ER_MAP
- ![image](https://github.com/Eliasfunction/SideProjectSelf_TodoListWebApiAndJWT/blob/master/ReadmeIMG/ER_MAP.png)
+ ![image](https://github.com/Eliasfunction/SideProjectSelf_TodoListWebApiAndJWT/blob/master/ReadmeIMG/ER_MAP_white.png)
 <br>
 ### Database_Tools  <br>
  ![image](https://github.com/Eliasfunction/SideProjectSelf_TodoListWebApiAndJWT/blob/master/ReadmeIMG/Database%20Tools.png)
